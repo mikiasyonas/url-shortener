@@ -12,4 +12,4 @@ db/migrations/diff:
 .PHONY:db/migrations/apply
 db/migrations/apply:
 	@echo 'Applying migrations...'
-	atlas migrate apply --url ${DB_URL}
+	atlas migrate apply --env gorm

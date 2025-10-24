@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/mikiasyonas/url-shortener/internal/core/domain"
+	"github.com/mikiasyonas/url-shortener/pkg/database"
 
 	"gorm.io/gorm"
 )
@@ -20,12 +21,16 @@ func NewURLRepository(db *gorm.DB) *URLRepository {
 func (r *URLRepository) Save(ctx context.Context, url *domain.URL) error {
 	result := r.db.WithContext(ctx).Create(url)
 	if result.Error != nil {
+		if database.IsDuplicateKeyError(result.Error) {
+			return domain.ErrShortCodeTaken
+		}
+
 		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
 			return domain.ErrShortCodeTaken
 		}
-		return result.Error
+
 	}
-	return nil
+	return result.Error
 }
 
 func (r *URLRepository) FindByShortCode(ctx context.Context, shortCode string) (*domain.URL, error) {

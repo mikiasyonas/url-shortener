@@ -4,6 +4,7 @@ go 1.24.1
 
 require (
 	ariga.io/atlas-provider-gorm v0.6.0
+	github.com/lib/pq v1.10.9
 	github.com/stretchr/testify v1.10.0
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/gorm v1.30.1

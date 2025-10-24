@@ -1,9 +1,11 @@
 package database
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/mikiasyonas/url-shortener/internal/core/domain"
@@ -81,4 +83,23 @@ func getEnv(key, defaultValue string) string {
 		return value
 	}
 	return defaultValue
+}
+
+func IsDuplicateKeyError(err error) bool {
+	errStr := err.Error()
+
+	patterns := []string{
+		"duplicate key value",
+		"unique constraint",
+		"violates unique constraint",
+		"23505",
+	}
+
+	for _, pattern := range patterns {
+		if strings.Contains(strings.ToLower(errStr), strings.ToLower(pattern)) {
+			return true
+		}
+	}
+
+	return errors.Is(err, gorm.ErrDuplicatedKey)
 }
