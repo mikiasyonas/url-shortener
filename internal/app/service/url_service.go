@@ -3,7 +3,9 @@ package service
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/url"
+	"time"
 
 	"github.com/mikiasyonas/url-shortener/internal/core/domain"
 	"github.com/mikiasyonas/url-shortener/internal/core/ports"
@@ -58,9 +60,11 @@ func (s *urlService) Redirect(ctx context.Context, shortCode string) (string, er
 	}
 
 	go func() {
-		backgroundCtx := context.Background()
+		backgroundCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
 		if err := s.repo.IncrementClickCount(backgroundCtx, shortCode); err != nil {
-			fmt.Printf("Failed to increment click count: %v\n", err)
+			log.Printf("Failed to increment click count: %v", err)
 		}
 	}()
 

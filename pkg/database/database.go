@@ -6,9 +6,9 @@ import (
 	"log"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/mikiasyonas/url-shortener/internal/core/domain"
+	"github.com/mikiasyonas/url-shortener/pkg/config"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -39,18 +39,12 @@ func (c *Config) DSN() string {
 		c.Host, c.Port, c.User, c.Password, c.Database, c.SSLMode)
 }
 
-func Connect(config *Config) (*gorm.DB, error) {
-	newLogger := logger.New(
-		log.New(os.Stdout, "\r\n", log.LstdFlags),
-		logger.Config{
-			SlowThreshold: time.Second,
-			LogLevel:      logger.Warn,
-			Colorful:      true,
-		},
-	)
+func Connect(cfg *config.DatabaseConfig) (*gorm.DB, error) {
+	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.Name, cfg.SSLMode)
 
-	db, err := gorm.Open(postgres.Open(config.DSN()), &gorm.Config{
-		Logger: newLogger,
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Warn),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
@@ -61,14 +55,13 @@ func Connect(config *Config) (*gorm.DB, error) {
 		return nil, fmt.Errorf("failed to get database instance: %w", err)
 	}
 
-	sqlDB.SetMaxIdleConns(10)
-	sqlDB.SetMaxOpenConns(100)
-	sqlDB.SetConnMaxLifetime(time.Hour)
+	sqlDB.SetMaxOpenConns(cfg.MaxOpenConns)
+	sqlDB.SetMaxIdleConns(cfg.MaxIdleConns)
+	sqlDB.SetConnMaxLifetime(cfg.ConnMaxLifetime)
 
-	log.Println("✅ Database connected successfully")
+	log.Printf("✅ Database connected successfully to %s:%s/%s", cfg.Host, cfg.Port, cfg.Name)
 	return db, nil
 }
-
 func AutoMigrate(db *gorm.DB) error {
 	err := db.AutoMigrate(&domain.URL{})
 	if err != nil {

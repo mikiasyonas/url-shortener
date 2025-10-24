@@ -2,9 +2,11 @@ package gorm
 
 import (
 	"context"
+	"log"
 	"testing"
 
 	"github.com/mikiasyonas/url-shortener/internal/core/domain"
+	"github.com/mikiasyonas/url-shortener/pkg/config"
 	"github.com/mikiasyonas/url-shortener/pkg/database"
 	"gorm.io/gorm"
 
@@ -19,16 +21,13 @@ type URLRepositoryTestSuite struct {
 }
 
 func (suite *URLRepositoryTestSuite) SetupTest() {
-	config := &database.Config{
-		Host:     "localhost",
-		Port:     "5432",
-		User:     "postgres",
-		Password: "password",
-		Database: "url_shortener",
-		SSLMode:  "disable",
+	cfg := config.Load()
+
+	if err := cfg.Validate(); err != nil {
+		log.Fatal("❌ Invalid configuration:", err)
 	}
 
-	db, err := database.Connect(config)
+	db, err := database.Connect(&cfg.Database)
 	suite.Require().NoError(err)
 
 	suite.db = db
