@@ -22,7 +22,6 @@
 - **Client** - End users accessing the URL shortener
 - **Load Balancer (Nginx)** - Distributes traffic across application servers
 - **App Servers** - 4+ replicas running the Go application
-- **Monitoring** - Metrics collection and monitoring system
 - **Redis Cache** - Cluster for high-performance caching
 - **PostgreSQL** - Primary database
 

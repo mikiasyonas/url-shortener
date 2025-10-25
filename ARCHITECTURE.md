@@ -20,6 +20,8 @@
 - **Docker** - Containerization for consistent deployments
 - **Health checks** - For service discovery and load balancing
 
+![System Architecture Diagram](docs/system_diagram.png)
+
 ## Data Flow
 
 ### URL Shortening Flow
