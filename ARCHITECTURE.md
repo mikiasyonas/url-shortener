@@ -73,28 +73,28 @@
 ## Explicit Trade-offs
 
 ### 1. Simplicity vs. Features
-**Choice**: Started with core functionality only
-**Trade-off**: No user accounts, analytics, or custom URLs initially
-**Rationale**: Meet assessment requirements without over-engineering
-**Future**: Can add features incrementally
+- **Choice**: Started with core functionality only
+- **Trade-off**: No user accounts, analytics, or custom URLs initially
+- **Rationale**: Meet assessment requirements without over-engineering
+- **Future**: Can add features incrementally
 
 ### 2. Performance vs. Consistency
-**Choice**: Eventual consistency for click counts
-**Trade-off**: Click counts may be slightly delayed
-**Rationale**: Redirect performance is critical path
-**Future**: Can implement stronger consistency if needed
+- **Choice**: Eventual consistency for click counts
+- **Trade-off**: Click counts may be slightly delayed
+- **Rationale**: Redirect performance is critical path
+- **Future**: Can implement stronger consistency if needed
 
 ### 3. Memory vs. Performance
-**Choice**: In-memory Redis cache
-**Trade-off**: Potential data loss on cache failure
-**Rationale**: URLs are persisted in PostgreSQL, cache is for performance
-**Future**: Can enable Redis persistence
+- **Choice**: In-memory Redis cache
+- **Trade-off**: Potential data loss on cache failure
+- **Rationale**: URLs are persisted in PostgreSQL, cache is for performance
+- **Future**: Can enable Redis persistence
 
 ### 4. Code Complexity vs. Observability
-**Choice**: Lightweight custom metrics vs. Prometheus
-**Trade-off**: Less sophisticated monitoring capabilities
-**Rationale**: Avoid heavy dependencies for assessment
-**Future**: Can integrate Prometheus later
+- **Choice**: Lightweight custom metrics vs. Prometheus
+- **Trade-off**: Less sophisticated monitoring capabilities
+- **Rationale**: Avoid heavy dependencies for assessment
+- **Future**: Can integrate Prometheus later
 
 ## Technical Assumptions
 
