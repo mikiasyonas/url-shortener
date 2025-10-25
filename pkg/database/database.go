@@ -59,7 +59,7 @@ func Connect(cfg *config.DatabaseConfig) (*gorm.DB, error) {
 	sqlDB.SetMaxIdleConns(cfg.MaxIdleConns)
 	sqlDB.SetConnMaxLifetime(cfg.ConnMaxLifetime)
 
-	log.Printf("✅ Database connected successfully to %s:%s/%s", cfg.Host, cfg.Port, cfg.Name)
+	log.Printf("Database connected successfully to %s:%s/%s", cfg.Host, cfg.Port, cfg.Name)
 	return db, nil
 }
 func AutoMigrate(db *gorm.DB) error {
@@ -67,7 +67,7 @@ func AutoMigrate(db *gorm.DB) error {
 	if err != nil {
 		return fmt.Errorf("failed to auto-migrate: %w", err)
 	}
-	log.Println("✅ Database migration completed")
+	log.Println("Database migration completed")
 	return nil
 }
 

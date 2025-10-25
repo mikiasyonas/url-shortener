@@ -16,6 +16,10 @@ type MockRepository struct {
 	mock.Mock
 }
 
+type MockURLService struct {
+	mock.Mock
+}
+
 func (m *MockRepository) Save(ctx context.Context, url *domain.URL) error {
 	args := m.Called(ctx, url)
 	return args.Error(0)

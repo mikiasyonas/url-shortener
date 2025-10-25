@@ -13,6 +13,15 @@ type Config struct {
 	Server   ServerConfig
 	Database DatabaseConfig
 	App      AppConfig
+	Redis    RedisConfig
+}
+
+type RedisConfig struct {
+	URL      string
+	Password string
+	DB       int
+	PoolSize int
+	TTL      time.Duration
 }
 
 type ServerConfig struct {
@@ -72,6 +81,13 @@ func Load() *Config {
 			MaxURLLength:       getEnvAsInt("APP_MAX_URL_LENGTH", 2048),
 			RateLimitPerSecond: getEnvAsInt("APP_RATE_LIMIT_PER_SECOND", 100),
 		},
+		Redis: RedisConfig{
+			URL:      getEnv("REDIS_URL", "localhost:6379"),
+			Password: getEnv("REDIS_PASSWORD", ""),
+			DB:       getEnvAsInt("REDIS_DB", 0),
+			PoolSize: getEnvAsInt("REDIS_POOL_SIZE", 100),
+			TTL:      getEnvAsDuration("REDIS_TTL", 24*time.Hour),
+		},
 	}
 }
 
@@ -90,6 +106,9 @@ func (c *Config) Validate() error {
 	}
 	if c.App.ShortCodeLength < 4 || c.App.ShortCodeLength > 10 {
 		return fmt.Errorf("APP_SHORT_CODE_LENGTH must be between 4 and 10")
+	}
+	if c.Redis.URL == "" {
+		return fmt.Errorf("REDIS_URL is required")
 	}
 	return nil
 }
