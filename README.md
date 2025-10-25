@@ -2,7 +2,7 @@
 
 ## Technology Stack
 
-**Go 1.21+** - Excellent performance with built-in concurrency and minimal runtime overhead
+**Go 1.24+** - Excellent performance with built-in concurrency and minimal runtime overhead
 
 **Standard Library** - No framework lock-in, maximum control over HTTP handling, and minimal dependencies
 
