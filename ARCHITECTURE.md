@@ -68,8 +68,6 @@
 
 ## ⚖️ Trade-offs and Assumptions
 
-**File: `TRADE-OFFS.md`**
-```markdown
 # Design Trade-offs and Assumptions
 
 ## Explicit Trade-offs
