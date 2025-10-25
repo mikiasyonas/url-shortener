@@ -42,6 +42,14 @@ cp .env.example .env
 # Start database and Redis
 docker-compose up -d postgres redis
 
+**Database Migrations**
+
+Use Atlas for managing migrations with the following commands:
+```bash
+atlas migrate diff --env gorm
+atlas migrate apply --env gorm
+```
+
 # Wait for databases to be ready
 sleep 10
 
