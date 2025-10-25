@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log"
 	nethttp "net/http"
 	"os"
 	"os/signal"
@@ -15,23 +14,28 @@ import (
 	"github.com/mikiasyonas/url-shortener/internal/core/ports"
 	"github.com/mikiasyonas/url-shortener/pkg/config"
 	"github.com/mikiasyonas/url-shortener/pkg/database"
+	"github.com/mikiasyonas/url-shortener/pkg/monitoring"
 	"github.com/mikiasyonas/url-shortener/pkg/shortcode"
 
 	"github.com/joho/godotenv"
 )
 
 func main() {
+	metrics := monitoring.NewMetrics()
+	logger := monitoring.NewLogger(monitoring.INFO)
+	healthChecker := monitoring.NewHealthChecker()
+
 	env := os.Getenv("ENVIRONMENT")
 	if env == "" || env == "development" {
 		if err := godotenv.Load(); err != nil {
-			log.Println("No .env file found, using environment variables")
+			logger.Error("No .env file found, using environment variables")
 		}
 	}
 
 	cfg := config.Load()
 
 	if err := cfg.Validate(); err != nil {
-		log.Fatal("❌ Invalid configuration:", err)
+		logger.Error("Invalid configuration:", err)
 	}
 
 	var redisCache ports.Cache
@@ -43,17 +47,17 @@ func main() {
 			cfg.Redis.TTL,
 		)
 		if err != nil {
-			log.Printf("Redis cache disabled: %v", err)
+			logger.Info("Redis cache disabled: %v", err)
 		} else {
 			redisCache = cache
 			defer cache.Close()
-			log.Println("Redis cache connected")
+			logger.Info("Redis cache connected")
 		}
 	}
 
 	db, err := database.Connect(&cfg.Database)
 	if err != nil {
-		log.Fatal("Failed to connect to database:", err)
+		logger.Error("Failed to connect to database:", err)
 	}
 
 	if err := database.OptimizeConnectionPool(db,
@@ -61,11 +65,16 @@ func main() {
 		cfg.Database.MaxIdleConns,
 		cfg.Database.ConnMaxLifetime,
 	); err != nil {
-		log.Printf("Failed to optimize connection pool: %v", err)
+		logger.Info("Failed to optimize connection pool: %v", err)
 	}
 
 	if err := database.AutoMigrate(db); err != nil {
-		log.Fatal("Failed to run migrations:", err)
+		logger.Error("Failed to run migrations:", err)
+	}
+
+	healthChecker.RegisterCheck("database", monitoring.DatabaseHealthCheck(db), true)
+	if redisCache != nil {
+		healthChecker.RegisterCheck("redis", monitoring.RedisHealthCheck(redisCache), false)
 	}
 
 	urlRepo := gorm.NewURLRepository(db)
@@ -76,12 +85,21 @@ func main() {
 	var urlService ports.URLService = baseURLService
 	if redisCache != nil {
 		urlService = service.NewCachedURLService(baseURLService, redisCache, urlRepo)
-		log.Println("Cached URL service enabled")
+		logger.Info("Cached URL service enabled")
 	}
 
-	router := http.NewRouter(urlService, cfg.App.BaseURL)
+	router := http.NewRouter(urlService, cfg.App.BaseURL, healthChecker, metrics)
 	rateLimiter := http.NewRateLimiter(1000, 100)
 	router.Use(rateLimiter.Limit)
+
+	monitoring := http.NewMonitoringMiddleware(metrics)
+	router.Use(monitoring.Middleware)
+
+	healthHandler := http.NewHealthHandler(healthChecker, metrics)
+	router.HandleFunc("/api/health", healthHandler.HealthCheck).Methods("GET")
+	router.HandleFunc("/api/metrics", healthHandler.Metrics).Methods("GET")
+	router.HandleFunc("/api/ready", healthHandler.Readiness).Methods("GET")
+	router.HandleFunc("/api/live", healthHandler.Liveness).Methods("GET")
 
 	server := &nethttp.Server{
 		Addr:         ":" + cfg.Server.Port,
@@ -92,12 +110,12 @@ func main() {
 	}
 
 	go func() {
-		log.Printf("Server listening on port %s", cfg.Server.Port)
-		log.Printf("Base URL: %s", cfg.App.BaseURL)
-		log.Printf("Environment: %s", cfg.Server.Env)
+		logger.Info("Server listening on port %s", cfg.Server.Port)
+		logger.Info("Base URL: %s", cfg.App.BaseURL)
+		logger.Info("Environment: %s", cfg.Server.Env)
 
 		if err := server.ListenAndServe(); err != nil && err != nethttp.ErrServerClosed {
-			log.Fatal("Failed to start server:", err)
+			logger.Error("Failed to start server:", err)
 		}
 	}()
 
@@ -105,14 +123,14 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	log.Println("Shutting down server...")
+	logger.Info("Shutting down server...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), cfg.Server.ShutdownTimeout)
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
-		log.Fatal("Server forced to shutdown:", err)
+		logger.Error("Server forced to shutdown:", err)
 	}
 
-	log.Println("Server stopped gracefully")
+	logger.Info("Server stopped gracefully")
 }

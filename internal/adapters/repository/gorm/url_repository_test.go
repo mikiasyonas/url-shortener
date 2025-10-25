@@ -24,7 +24,7 @@ func (suite *URLRepositoryTestSuite) SetupTest() {
 	cfg := config.Load()
 
 	if err := cfg.Validate(); err != nil {
-		log.Fatal("❌ Invalid configuration:", err)
+		log.Fatal("Invalid configuration:", err)
 	}
 
 	db, err := database.Connect(&cfg.Database)
