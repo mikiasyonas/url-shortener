@@ -3,15 +3,20 @@
 echo "Production Deployment Process"
 echo "======================================"
 
+# 1. Set environment to production first
+echo ""
+echo "0. Setting environment to PRODUCTION"
+export ENVIRONMENT=production
+
 # 2. Check Docker Compose
 echo ""
-echo "1. 🔍 Checking Docker Compose:"
+echo "1. Checking Docker Compose:"
 if command -v docker-compose &> /dev/null; then
     DOCKER_COMPOSE_CMD="docker-compose"
-    echo "✅ Using docker-compose"
+    echo "Using docker-compose"
 elif docker compose version &> /dev/null; then
     DOCKER_COMPOSE_CMD="docker compose"
-    echo "✅ Using docker compose"
+    echo "Using docker compose"
 else
     echo "Docker Compose not found"
     echo "Install from: https://docs.docker.com/compose/install/"
@@ -33,12 +38,15 @@ echo ""
 echo "4. Checking Service Status:"
 $DOCKER_COMPOSE_CMD -f deployments/docker-compose.prod.yml ps
 
-echo "🗄️ Running database migrations..."
+# 6. Run migrations with production environment
+echo ""
+echo "5. Running database migrations..."
+export ENVIRONMENT=production
 atlas migrate apply --env gorm
 
-# 6. Test the application
+# 7. Test the application
 echo ""
-echo "5. Testing Application:"
+echo "6. Testing Application:"
 echo "Health check:"
 curl -s http://localhost/health || echo "Health check failed"
 
@@ -57,5 +65,5 @@ else
 fi
 
 echo ""
-echo "Deployement completed!"
+echo "Deployment completed!"
 echo "Access your URL shortener at: http://localhost"
