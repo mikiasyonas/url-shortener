@@ -16,31 +16,28 @@ Capable of handling 10,000+ requests per second with proper scaling.
 # 🏗️ Architecture
 ## Technology Stack
 ### Component	Technology	Justification
-**Language**	Go 1.21+	Excellent performance, built-in concurrency, minimal runtime
-**Architecture**	Hexagonal/Ports & Adapters	Clean separation, testable, maintainable
-**Database**	PostgreSQL	ACID compliance, JSON support, excellent performance
-**Caching**	Redis	High-performance, persistence options, atomic operations
-**Containerization**	Docker	Consistent environments, cloud-agnostic deployment
+
+**Language**:	Go 1.21+	Excellent performance, built-in concurrency, minimal runtime
+**Architecture**:	Hexagonal/Ports & Adapters	Clean separation, testable, maintainable
+**Database**:	PostgreSQL	ACID compliance, JSON support, excellent performance
+**Caching**:	Redis	High-performance, persistence options, atomic operations
+**Containerization**:	Docker	Consistent environments, cloud-agnostic deployment
 
 
 ## System Design
 
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Client        │    │   Load Balancer  │    │   App Servers   │
-│                 │───▶│   (Nginx)        │───▶│   (4+ replicas) │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-                                                         │
-                                                         ▼
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Monitoring    │◀───│   Redis Cache    │◀───│   PostgreSQL    │
-│   (Metrics)     │    │   (Cluster)      │    │   (Primary +    │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-                                                          │
-                                                          ▼
-                                                   ┌─────────────────┐
-                                                   │   Read Replicas │
-                                                   │   (2 instances) │
-                                                   └─────────────────┘
+![System Architecture Diagram](docs/system_diagram.png)
+
+## Architecture Overview
+
+The system consists of the following components:
+
+- **Client** - End users accessing the URL shortener
+- **Load Balancer (Nginx)** - Distributes traffic across application servers
+- **App Servers** - 4+ replicas running the Go application
+- **Monitoring** - Metrics collection and monitoring system
+- **Redis Cache** - Cluster for high-performance caching
+- **PostgreSQL** - Primary database with read replicas (2 instances)
 
 # Quick Start
 ## Prerequisites
