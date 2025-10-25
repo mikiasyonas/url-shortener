@@ -95,12 +95,6 @@ func main() {
 	monitoring := http.NewMonitoringMiddleware(metrics)
 	router.Use(monitoring.Middleware)
 
-	healthHandler := http.NewHealthHandler(healthChecker, metrics)
-	router.HandleFunc("/api/health", healthHandler.HealthCheck).Methods("GET")
-	router.HandleFunc("/api/metrics", healthHandler.Metrics).Methods("GET")
-	router.HandleFunc("/api/ready", healthHandler.Readiness).Methods("GET")
-	router.HandleFunc("/api/live", healthHandler.Liveness).Methods("GET")
-
 	server := &nethttp.Server{
 		Addr:         ":" + cfg.Server.Port,
 		Handler:      router,

@@ -5,6 +5,8 @@ services:
     build:
       context: ..
       dockerfile: deployments/Dockerfile
+    env_file:
+      - ../.env.production
     environment:
       - ENVIRONMENT=production
       - SERVER_PORT=8080
@@ -17,65 +19,33 @@ services:
       - APP_BASE_URL=${APP_BASE_URL}
     deploy:
       replicas: 4
-      resources:
-        limits:
-          memory: 512M
-          cpus: '1.0'
-        reservations:
-          memory: 256M
-          cpus: '0.5'
     depends_on:
       - postgres
       - redis
 
   postgres:
     image: postgres:15-alpine
+    env_file:
+      - .env.production
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ../migrations:/docker-entrypoint-initdb.d
-    command: |
-      postgres 
-      -c shared_preload_libraries=pg_stat_statements 
-      -c pg_stat_statements.track=all 
-      -c max_connections=200 
-      -c shared_buffers=256MB 
-      -c effective_cache_size=1GB 
-      -c work_mem=16MB 
-      -c maintenance_work_mem=64MB
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-          cpus: '1.0'
 
   redis:
     image: redis:7-alpine
     command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-          cpus: '0.5'
 
   nginx:
     image: nginx:alpine
     ports:
       - "80:80"
-      - "443:443"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
-      - ./ssl:/etc/nginx/ssl
     depends_on:
       - app
-    deploy:
-      resources:
-        limits:
-          memory: 128M
-          cpus: '0.25'
 
 volumes:
   postgres_data:

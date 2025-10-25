@@ -109,12 +109,6 @@ func (m *Metrics) GetMetrics() map[string]interface{} {
 		avgDuration = totalDuration / time.Duration(len(m.requestDurations))
 	}
 
-	var cacheHitRate float64
-	totalCacheOps := m.cacheHits + m.cacheMisses
-	if totalCacheOps > 0 {
-		cacheHitRate = float64(m.cacheHits) / float64(totalCacheOps) * 100
-	}
-
 	var errorRate float64
 	totalRequests := int64(0)
 	for _, count := range m.requestsTotal {
@@ -131,22 +125,6 @@ func (m *Metrics) GetMetrics() map[string]interface{} {
 		"status_codes":            m.statusCodes,
 		"request_duration_avg_ms": avgDuration.Milliseconds(),
 		"requests_per_second":     float64(totalRequests) / time.Since(m.startTime).Seconds(),
-
-		"business": map[string]interface{}{
-			"urls_shortened":  m.urlsShortened,
-			"urls_redirected": m.urlsRedirected,
-			"cache": map[string]interface{}{
-				"hits":     m.cacheHits,
-				"misses":   m.cacheMisses,
-				"hit_rate": fmt.Sprintf("%.2f%%", cacheHitRate),
-			},
-		},
-
-		"database": map[string]interface{}{
-			"queries_total": m.dbQueriesTotal,
-			"errors":        m.dbQueryErrors,
-			"error_rate":    fmt.Sprintf("%.2f%%", float64(m.dbQueryErrors)/float64(m.dbQueriesTotal)*100),
-		},
 
 		"system": map[string]interface{}{
 			"error_rate": fmt.Sprintf("%.2f%%", errorRate),

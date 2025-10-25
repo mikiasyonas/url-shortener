@@ -129,7 +129,7 @@ func TestHandlers_HealthCheck(t *testing.T) {
 	mockService := new(MockURLService)
 	handlers := http.NewHandlers(mockService, "http://localhost:8080")
 
-	req := httptest.NewRequest("GET", "/api/health", nil)
+	req := httptest.NewRequest("GET", "/health", nil)
 
 	rr := httptest.NewRecorder()
 	handlers.HealthCheck(rr, req)

@@ -5,7 +5,7 @@ services:
     image: postgres:15-alpine
     environment:
       POSTGRES_DB: url_shortener
-      POSTGRES_USER: postgres
+      POSTGRES_USER: urlshortener
       POSTGRES_PASSWORD: password
     ports:
       - "5432:5432"

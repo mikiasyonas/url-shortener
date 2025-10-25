@@ -11,15 +11,15 @@ func NewRouter(urlService ports.URLService, baseUrl string, healthChecker *monit
 	router := mux.NewRouter()
 	handlers := NewHandlers(urlService, baseUrl)
 
+	healthHandler := NewHealthHandler(healthChecker, metrics)
+	router.HandleFunc("/health", healthHandler.HealthCheck).Methods("GET")
+	router.HandleFunc("/metrics", healthHandler.Metrics).Methods("GET")
+	router.HandleFunc("/ready", healthHandler.Readiness).Methods("GET")
+	router.HandleFunc("/live", healthHandler.Liveness).Methods("GET")
+
 	api := router.PathPrefix("/api").Subrouter()
 	router.HandleFunc("/{code}", handlers.Redirect).Methods("GET")
 	api.HandleFunc("/shorten", handlers.ShortenURL).Methods("POST")
-
-	healthHandler := NewHealthHandler(healthChecker, metrics)
-	api.HandleFunc("/health", healthHandler.HealthCheck).Methods("GET")
-	api.HandleFunc("/metrics", healthHandler.Metrics).Methods("GET")
-	api.HandleFunc("/ready", healthHandler.Readiness).Methods("GET")
-	api.HandleFunc("/live", healthHandler.Liveness).Methods("GET")
 
 	return router
 }

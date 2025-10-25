@@ -2,7 +2,11 @@ package monitoring
 
 import (
 	"context"
+	"fmt"
 	"time"
+
+	"github.com/mikiasyonas/url-shortener/internal/core/domain"
+	"gorm.io/gorm"
 )
 
 type HealthChecker struct {
@@ -82,14 +86,58 @@ func (h *HealthChecker) Check(ctx context.Context) *HealthStatus {
 	}
 }
 
-func DatabaseHealthCheck(db interface{}) func(ctx context.Context) (bool, error) {
+func DatabaseHealthCheck(db *gorm.DB) func(ctx context.Context) (bool, error) {
 	return func(ctx context.Context) (bool, error) {
+		sqlDB, err := db.DB()
+		if err != nil {
+			return false, fmt.Errorf("failed to get database instance: %w", err)
+		}
+
+		pingCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+
+		if err := sqlDB.PingContext(pingCtx); err != nil {
+			return false, fmt.Errorf("database ping failed: %w", err)
+		}
+
+		stats := sqlDB.Stats()
+		if stats.OpenConnections >= stats.MaxOpenConnections {
+			return false, fmt.Errorf("database connection pool exhausted: %d/%d", stats.OpenConnections, stats.MaxOpenConnections)
+		}
+
 		return true, nil
 	}
 }
 
-func RedisHealthCheck(redis interface{}) func(ctx context.Context) (bool, error) {
+func RedisHealthCheck(cache interface{}) func(ctx context.Context) (bool, error) {
 	return func(ctx context.Context) (bool, error) {
+		if redisCache, ok := cache.(interface{ GetClient() interface{} }); ok {
+			client := redisCache.GetClient()
+			if pingable, ok := client.(interface{ Ping(context.Context) error }); ok {
+				pingCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
+				defer cancel()
+
+				if err := pingable.Ping(pingCtx); err != nil {
+					return false, fmt.Errorf("redis ping failed: %w", err)
+				}
+				return true, nil
+			}
+		}
+
+		if testableCache, ok := cache.(interface {
+			GetURL(ctx context.Context, shortCode string) (*domain.URL, error)
+		}); ok {
+			testCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
+			defer cancel()
+
+			// Try to get a non-existent key to test connectivity
+			_, err := testableCache.GetURL(testCtx, "health-check-test")
+			if err != nil && err != domain.ErrURLNotFound {
+				return false, fmt.Errorf("redis operation failed: %w", err)
+			}
+			return true, nil
+		}
+
 		return true, nil
 	}
 }

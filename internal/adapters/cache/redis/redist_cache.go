@@ -99,3 +99,7 @@ func (r *RedisCache) clickCountKey(shortCode string) string {
 func (r *RedisCache) Close() error {
 	return r.client.Close()
 }
+
+func (r *RedisCache) GetClient() interface{} {
+	return r.client
+}

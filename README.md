@@ -47,13 +47,10 @@ docker-compose up -d postgres redis
 sleep 10
 
 # Start application
-docker-compose up -d app
-
-# Check status
-docker-compose ps
+go run cmd/api/main.go
 
 # Health check
-curl http://localhost:8080/api/health
+curl http://localhost:8080/health
 
 # Test URL shortening
 curl -X POST http://localhost:8080/api/shorten \

@@ -34,6 +34,6 @@
 4. Run `go run cmd/api/main.go`
 
 ## Production Setup
-1. Copy `.env.production.example` to `.env`
+1. Copy `.env.production.example` to `.production.env`
 2. Set all required values for production
-3. Deploy with your preferred method
+3. RUN `./deploy.sh`
