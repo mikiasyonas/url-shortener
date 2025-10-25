@@ -36,7 +36,7 @@
 
 ```bash
 # Clone and setup environment
-git clone <repository-url>
+git clone https://github.com/mikiasyonas/url-shortener
 cd url-shortener
 cp .env.example .env
 
